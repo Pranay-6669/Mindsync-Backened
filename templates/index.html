@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webcam Preview</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            max-width: 800px;
+            padding: 20px;
+        }
+        .video-container {
+            margin: 20px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #000;
+            position: relative;
+        }
+        #video-feed {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+        }
+        .status {
+            margin: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #e0e0e0;
+            min-width: 300px;
+        }
+        .status.error {
+            background-color: #ffcdd2;
+            color: #c62828;
+        }
+        .status.success {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+        }
+        .controls {
+            margin: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            text-align: left;
+        }
+        .tips {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border-radius: 5px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Webcam Preview</h1>
+        <div class="video-container">
+            <img id="video-feed" src="{{ url_for('video_feed') }}" alt="Video Feed">
+        </div>
+        <div class="status" id="status-container">
+            <p>Webcam Status: <span id="status">Loading...</span></p>
+            <p>Resolution: <span id="resolution">Loading...</span></p>
+            <p>Faces Detected: <span id="faces">Loading...</span></p>
+        </div>
+        <div class="controls">
+            <button onclick="checkStatus()">Check Status</button>
+        </div>
+        <div class="debug-info" id="debug-info">
+            <h3>Debug Information</h3>
+            <p>Frame Size: <span id="frame-size">Loading...</span></p>
+            <p>Webcam ID: <span id="webcam-id">0</span></p>
+        </div>
+        <div class="tips">
+            <h3>Tips for Better Face Detection</h3>
+            <ul>
+                <li>Ensure you are in a well-lit area</li>
+                <li>Position your face directly in front of the camera</li>
+                <li>Keep your face at a reasonable distance (not too close or too far)</li>
+                <li>Make sure your face is clearly visible and not obstructed</li>
+                <li>Try adjusting the lighting if face detection is inconsistent</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function checkStatus() {
+            const statusContainer = document.getElementById('status-container');
+            const statusElement = document.getElementById('status');
+            const resolutionElement = document.getElementById('resolution');
+            const facesElement = document.getElementById('faces');
+            const frameSizeElement = document.getElementById('frame-size');
+            
+            statusContainer.className = 'status';
+            statusElement.textContent = 'Checking...';
+            resolutionElement.textContent = 'Checking...';
+            facesElement.textContent = 'Checking...';
+            
+            fetch('/test')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        statusContainer.className = 'status success';
+                        statusElement.textContent = 'Working';
+                        resolutionElement.textContent = `${data.webcam.width}x${data.webcam.height}`;
+                        facesElement.textContent = data.webcam.faces_detected;
+                        frameSizeElement.textContent = data.webcam.frame_size;
+                    } else {
+                        statusContainer.className = 'status error';
+                        statusElement.textContent = 'Not Working';
+                        resolutionElement.textContent = 'N/A';
+                        facesElement.textContent = 'N/A';
+                        frameSizeElement.textContent = 'N/A';
+                    }
+                })
+                .catch(error => {
+                    statusContainer.className = 'status error';
+                    statusElement.textContent = 'Error checking status';
+                    resolutionElement.textContent = 'N/A';
+                    facesElement.textContent = 'N/A';
+                    frameSizeElement.textContent = 'N/A';
+                    console.error('Error:', error);
+                });
+        }
+
+        // Check status on page load
+        checkStatus();
+        
+        // Refresh video feed every 2 seconds
+        setInterval(() => {
+            const videoFeed = document.getElementById('video-feed');
+            videoFeed.src = "{{ url_for('video_feed') }}?" + new Date().getTime();
+        }, 2000);
+    </script>
+</body>
+</html> 
